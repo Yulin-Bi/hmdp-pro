@@ -7,11 +7,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 .header-back-btn{
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 22px;
 }
 .header-title {
@@ -23,7 +25,7 @@
 
 .content{
     height: 93%;
-    background-color: #f7f5f5;
+    background: linear-gradient(180deg, #f4f8ff 0%, #fff 54%);
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -40,7 +42,7 @@
     align-items: start;
 }
 input[type="radio"] + label::before {
-    content: "\a0"; /*不换行空格*/
+    content: "\a0";
     display: inline-block;
     vertical-align: middle;
     font-size: 12px;
@@ -48,13 +50,13 @@ input[type="radio"] + label::before {
     height: 0.7em;
     margin-right: .4em;
     border-radius: 50%;
-    border: 2px solid #F63;
+    border: 2px solid #1f7aff;
     text-indent: .15em;
     line-height: 1; 
     padding: .2em;
 }
 input[type="radio"]:checked + label::before {
-    background-color: #F63;
+    background: linear-gradient(135deg, #1f7aff, #0bb8a7);
     background-clip: content-box;
     padding: .2em;
 }

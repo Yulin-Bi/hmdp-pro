@@ -5,11 +5,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 .header-back-btn{
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 22px;
 }
 .header-title {
@@ -30,7 +32,7 @@
     padding: 1px;
     background-color: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 8px 20px rgba(31, 122, 255, 0.14);
 }
 .basic-icon img {
     border-radius: 50%;
@@ -50,7 +52,8 @@
 .basic-info span{
     display: inline-block;
     padding: 0 10px;
-    background-color: #eeeded;
+    background-color: #eaf3ff;
+    color: #155bd4;
     margin: 5px 0 10px;
     border-radius: 2px;
  }
@@ -60,8 +63,9 @@
     line-height: 20px;
     border-radius: 12px;
     text-align: center;
-    border: #eeeded 1px solid;
-    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.04);
+    border: #dbeafe 1px solid;
+    color: #1f7aff;
+    box-shadow: 0 4px 12px rgba(31, 122, 255, 0.08);
 }
 .logout-btn{
     width: 18%;
@@ -71,8 +75,8 @@
     color: white;
     padding: 0 2px;
     border-radius: 3px;
-    background-color: #f63;
-    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.04);
+    background: linear-gradient(135deg, #1f7aff, #155bd4);
+    box-shadow: 0 6px 14px rgba(31, 122, 255, 0.2);
 }
 
 .introduce{
@@ -171,8 +175,9 @@
     font-size: 10px;
     line-height: 20px;
     height: 20px;
-    border: #ff6633 1px solid;
-    color: #ff6633;
+    border: #1f7aff 1px solid;
+    color: #1f7aff;
+    background: #eef6ff;
     border-radius: 5px;
     text-align: center;
 }
@@ -190,8 +195,9 @@
     width: 90%;
     background-color: #fff;
     margin: 5px 0;
-    box-shadow: 0 3px 4px 1px rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
+    box-shadow: 0 8px 22px rgba(31, 122, 255, 0.08);
+    border-radius: 8px;
+    overflow: hidden;
 }
 .blog-img2 img{
     width: 100%;

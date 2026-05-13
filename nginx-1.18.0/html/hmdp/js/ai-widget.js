@@ -6,22 +6,41 @@
 
   function createEl(tag, className, html) {
     var el = document.createElement(tag);
-    if (className) {
-      el.className = className;
-    }
-    if (html !== undefined) {
-      el.innerHTML = html;
-    }
+    if (className) el.className = className;
+    if (html !== undefined) el.innerHTML = html;
     return el;
   }
 
   function ensureStyles() {
-    if (document.getElementById('ai-chat-widget-style')) {
-      return;
-    }
+    if (document.getElementById('ai-chat-widget-style')) return;
     var style = createEl('style');
     style.id = 'ai-chat-widget-style';
-    style.innerHTML = '\n      .ai-chat-launcher{position:fixed;right:18px;bottom:96px;z-index:2147483647;width:60px;height:60px;border:none;border-radius:50%;background:linear-gradient(135deg,#1f7aff,#0bb8a7);color:#fff;box-shadow:0 14px 32px rgba(0,0,0,.26);cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;}\n      .ai-chat-panel{position:fixed;right:18px;bottom:172px;z-index:2147483647;width:calc(100vw - 36px);max-width:360px;height:520px;background:#fff;border-radius:18px;box-shadow:0 18px 48px rgba(15,23,42,.26);display:none;overflow:hidden;border:1px solid rgba(148,163,184,.22);font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;}\n      .ai-chat-panel.open{display:flex;flex-direction:column;}\n      .ai-chat-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;}\n      .ai-chat-title{font-size:15px;font-weight:700;}\n      .ai-chat-subtitle{font-size:12px;opacity:.75;margin-top:2px;}\n      .ai-chat-body{flex:1;padding:14px;background:#f8fafc;overflow:auto;}\n      .ai-chat-item{margin-bottom:12px;display:flex;}\n      .ai-chat-item.user{justify-content:flex-end;}\n      .ai-chat-bubble{max-width:84%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;}\n      .ai-chat-item.user .ai-chat-bubble{background:#1f7aff;color:#fff;border-bottom-right-radius:4px;}\n      .ai-chat-item.assistant .ai-chat-bubble{background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-bottom-left-radius:4px;}\n      .ai-chat-footer{padding:12px;border-top:1px solid #e2e8f0;background:#fff;}\n      .ai-chat-input-row{display:flex;gap:8px;align-items:flex-end;}\n      .ai-chat-input{flex:1;min-height:42px;max-height:110px;padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;resize:none;outline:none;font-size:13px;line-height:1.5;}\n      .ai-chat-send{width:72px;height:42px;border:none;border-radius:12px;background:#0f172a;color:#fff;cursor:pointer;font-size:14px;}\n      .ai-chat-send:disabled{opacity:.55;cursor:not-allowed;}\n      .ai-chat-close{background:transparent;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;}\n      .ai-chat-empty{color:#64748b;font-size:12px;text-align:center;padding:24px 10px;}\n      .ai-chat-meta{font-size:12px;color:#64748b;margin-top:4px;}\n    ';
+    style.innerHTML = [
+      '.ai-chat-launcher{position:fixed;right:18px;bottom:96px;z-index:2147483647;width:58px;height:58px;border:none;border-radius:18px;background:linear-gradient(135deg,#1f7aff,#0bb8a7);color:#fff;box-shadow:0 14px 30px rgba(31,122,255,.28);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;flex-direction:column;font-size:12px;font-weight:700;}',
+      '.ai-chat-launcher i{font-size:20px;line-height:1;}',
+      '.ai-chat-panel{position:fixed;right:18px;bottom:168px;z-index:2147483647;width:calc(100vw - 36px);max-width:370px;height:540px;background:#fff;border-radius:16px;box-shadow:0 22px 56px rgba(15,23,42,.24);display:none;overflow:hidden;border:1px solid #dbeafe;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;}',
+      '.ai-chat-panel.open{display:flex;flex-direction:column;}',
+      '.ai-chat-header{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;background:linear-gradient(135deg,#1f7aff,#155bd4);color:#fff;}',
+      '.ai-chat-title{font-size:16px;font-weight:800;}',
+      '.ai-chat-subtitle{font-size:12px;opacity:.85;margin-top:3px;}',
+      '.ai-chat-close{width:30px;height:30px;border:none;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;font-size:20px;line-height:1;cursor:pointer;}',
+      '.ai-chat-body{flex:1;padding:14px;background:linear-gradient(180deg,#f5f9ff,#fff);overflow:auto;}',
+      '.ai-chat-item{margin-bottom:12px;display:flex;}',
+      '.ai-chat-item.user{justify-content:flex-end;}',
+      '.ai-chat-bubble{max-width:84%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;}',
+      '.ai-chat-item.user .ai-chat-bubble{background:linear-gradient(135deg,#1f7aff,#0bb8a7);color:#fff;border-bottom-right-radius:4px;}',
+      '.ai-chat-item.assistant .ai-chat-bubble{background:#fff;color:#172033;border:1px solid #dbeafe;border-bottom-left-radius:4px;box-shadow:0 6px 18px rgba(31,122,255,.06);}',
+      '.ai-chat-empty{color:#64748b;font-size:12px;text-align:center;padding:28px 12px;}',
+      '.ai-chat-quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}',
+      '.ai-chat-chip{border:1px solid #bfdbfe;background:#fff;color:#155bd4;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer;}',
+      '.ai-chat-footer{padding:12px;border-top:1px solid #dbeafe;background:#fff;}',
+      '.ai-chat-input-row{display:flex;gap:8px;align-items:flex-end;}',
+      '.ai-chat-input{flex:1;min-height:42px;max-height:110px;padding:10px 12px;border-radius:12px;border:1px solid #bfdbfe;resize:none;outline:none;font-size:13px;line-height:1.5;background:#f8fbff;}',
+      '.ai-chat-input:focus{border-color:#1f7aff;background:#fff;}',
+      '.ai-chat-send{width:68px;height:42px;border:none;border-radius:12px;background:#1f7aff;color:#fff;cursor:pointer;font-size:14px;font-weight:700;}',
+      '.ai-chat-send:disabled{opacity:.55;cursor:not-allowed;}',
+      '.ai-chat-meta{font-size:12px;color:#64748b;margin-top:6px;}'
+    ].join('\n');
     document.head.appendChild(style);
   }
 
@@ -29,19 +48,14 @@
     return sessionStorage.getItem('aiChatConversationId') || '';
   }
 
+  function setConversationId(conversationId) {
+    if (conversationId) sessionStorage.setItem('aiChatConversationId', conversationId);
+  }
+
   function getUrlParam(name) {
     var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
     var result = window.location.search.substr(1).match(reg);
-    if (result != null) {
-      return decodeURI(result[2]);
-    }
-    return '';
-  }
-
-  function setConversationId(conversationId) {
-    if (conversationId) {
-      sessionStorage.setItem('aiChatConversationId', conversationId);
-    }
+    return result == null ? '' : decodeURI(result[2]);
   }
 
   function getShopIdFromPage() {
@@ -49,7 +63,7 @@
   }
 
   function escapeText(text) {
-    return String(text)
+    return String(text == null ? '' : text)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
@@ -63,28 +77,80 @@
     listEl.scrollTop = listEl.scrollHeight;
   }
 
-  function initWidget() {
-    if (document.getElementById('ai-chat-launcher')) {
-      return;
+  function normalizeChatResponse(response) {
+    var data = response && response.data !== undefined ? response.data : (response || {});
+    for (var i = 0; i < 3; i++) {
+      if (data && data.success !== undefined && data.data !== undefined) {
+        data = data.data || {};
+        continue;
+      }
+      if (data && data.data && data.answer === undefined && data.message === undefined) {
+        data = data.data;
+        continue;
+      }
+      break;
     }
-    if (!window.axios || (typeof util === 'undefined' && !window.util)) {
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        data = { answer: data };
+      }
+    }
+    return data || {};
+  }
+
+  function getAnswerText(data) {
+    if (data.answer) return data.answer;
+    if (data.message) return data.message;
+    return '暂时没有返回内容，请换个问法再试。';
+  }
+
+  function initWidget() {
+    if (!window.axios) {
       window.setTimeout(initWidget, 50);
       return;
     }
 
     ensureStyles();
 
-    var launcher = createEl('button', 'ai-chat-launcher', '客服');
+    var oldLaunchers = document.querySelectorAll('#ai-chat-launcher');
+    for (var i = 1; i < oldLaunchers.length; i++) oldLaunchers[i].parentNode.removeChild(oldLaunchers[i]);
+
+    var launcher = document.getElementById('ai-chat-launcher') || createEl('button', 'ai-chat-launcher');
     launcher.id = 'ai-chat-launcher';
+    launcher.className = 'ai-chat-launcher';
     launcher.type = 'button';
     launcher.setAttribute('aria-label', '智能客服');
+    launcher.removeAttribute('style');
+    launcher.innerHTML = '<i class="el-icon-service"></i><span>客服</span>';
 
-    var panel = createEl('div', 'ai-chat-panel');
+    var panel = document.getElementById('ai-chat-panel') || createEl('div', 'ai-chat-panel');
     panel.id = 'ai-chat-panel';
-    panel.innerHTML = '\n      <div class="ai-chat-header">\n        <div>\n          <div class="ai-chat-title">智能客服</div>\n          <div class="ai-chat-subtitle">可查询店铺信息，也可预约到店</div>\n        </div>\n        <button class="ai-chat-close" type="button">×</button>\n      </div>\n      <div class="ai-chat-body"><div class="ai-chat-empty">发送问题后，客服会给出店铺信息或预约帮助</div></div>\n      <div class="ai-chat-footer">\n        <div class="ai-chat-input-row">\n          <textarea class="ai-chat-input" placeholder="例如：这家店几点关门？或者帮我预约明天晚上 7 点到店"></textarea>\n          <button class="ai-chat-send" type="button">发送</button>\n        </div>\n        <div class="ai-chat-meta">登录后可直接使用，预约时会自动记住当前会话。</div>\n      </div>\n    ';
+    panel.className = 'ai-chat-panel';
+    panel.innerHTML =
+      '<div class="ai-chat-header">' +
+        '<div><div class="ai-chat-title">智能客服</div><div class="ai-chat-subtitle">查店铺、推荐门店、预约到店</div></div>' +
+        '<button class="ai-chat-close" type="button">×</button>' +
+      '</div>' +
+      '<div class="ai-chat-body">' +
+        '<div class="ai-chat-quick">' +
+          '<button class="ai-chat-chip" type="button">这家店几点关门？</button>' +
+          '<button class="ai-chat-chip" type="button">附近有什么推荐？</button>' +
+          '<button class="ai-chat-chip" type="button">帮我预约明晚7点</button>' +
+        '</div>' +
+        '<div class="ai-chat-empty">你好，我可以帮你查店铺信息、推荐门店，也能协助预约到店。</div>' +
+      '</div>' +
+      '<div class="ai-chat-footer">' +
+        '<div class="ai-chat-input-row">' +
+          '<textarea class="ai-chat-input" placeholder="输入你的问题，例如：这家店人均多少？"></textarea>' +
+          '<button class="ai-chat-send" type="button">发送</button>' +
+        '</div>' +
+        '<div class="ai-chat-meta">登录后可使用，会自动带上当前店铺上下文。</div>' +
+      '</div>';
 
-    document.body.appendChild(launcher);
-    document.body.appendChild(panel);
+    if (!launcher.parentNode) document.body.appendChild(launcher);
+    if (!panel.parentNode) document.body.appendChild(panel);
 
     var bodyEl = panel.querySelector('.ai-chat-body');
     var inputEl = panel.querySelector('.ai-chat-input');
@@ -94,66 +160,52 @@
 
     function openPanel() {
       panel.classList.add('open');
-      emptyEl.style.display = bodyEl.children.length > 0 ? 'none' : 'block';
-      window.setTimeout(function () {
-        inputEl.focus();
-      }, 0);
+      window.setTimeout(function () { inputEl.focus(); }, 0);
     }
 
     function closePanel() {
       panel.classList.remove('open');
     }
 
-    function sendMessage() {
-      var text = inputEl.value.trim();
-      if (!text) {
-        return;
-      }
+    function sendMessage(text) {
+      text = (text || inputEl.value).trim();
+      if (!text || sendEl.disabled) return;
       emptyEl.style.display = 'none';
       renderMessage(bodyEl, 'user', text);
       inputEl.value = '';
       sendEl.disabled = true;
-      var payload = {
+      axios.post('/ai/chat', {
         message: text,
         conversationId: getConversationId(),
         shopId: getShopIdFromPage()
-      };
-      axios.post('/ai/chat', payload, { timeout: 180000 }).then(function (response) {
-        var data = response.data || response || {};
-        if (data.conversationId) {
-          setConversationId(data.conversationId);
-        }
-        renderMessage(bodyEl, 'assistant', data.answer || '暂时没有返回内容');
+      }, { timeout: 180000 }).then(function (response) {
+        var data = normalizeChatResponse(response);
+        if (data.conversationId) setConversationId(data.conversationId);
+        renderMessage(bodyEl, 'assistant', getAnswerText(data));
       }).catch(function (error) {
-        var message = '服务器异常';
-        if (typeof error === 'string') {
-          message = error;
-        } else if (error && error.code === 'ECONNABORTED') {
-          message = '请求超时，请稍后重试';
-        } else if (error && error.response && error.response.data && error.response.data.errorMsg) {
-          message = error.response.data.errorMsg;
-        } else if (error && error.message) {
-          message = error.message;
-        }
+        var message = '服务暂时不可用，请稍后再试。';
+        if (typeof error === 'string') message = error;
+        else if (error && error.code === 'ECONNABORTED') message = '请求超时，请稍后重试。';
+        else if (error && error.response && error.response.data && error.response.data.errorMsg) message = error.response.data.errorMsg;
+        else if (error && error.message) message = error.message;
         renderMessage(bodyEl, 'assistant', message);
       }).finally(function () {
         sendEl.disabled = false;
       });
     }
 
-    launcher.addEventListener('click', openPanel);
-    closeEl.addEventListener('click', closePanel);
-    sendEl.addEventListener('click', sendMessage);
-    inputEl.addEventListener('keydown', function (event) {
+    launcher.onclick = openPanel;
+    closeEl.onclick = closePanel;
+    sendEl.onclick = function () { sendMessage(); };
+    inputEl.onkeydown = function (event) {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         sendMessage();
       }
+    };
+    Array.prototype.forEach.call(panel.querySelectorAll('.ai-chat-chip'), function (chip) {
+      chip.onclick = function () { sendMessage(chip.textContent); };
     });
-
-    if (getConversationId()) {
-      emptyEl.textContent = '已恢复上次会话，可以继续追问';
-    }
   }
 
   function bootstrapWidget() {

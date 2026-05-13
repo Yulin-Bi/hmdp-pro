@@ -6,6 +6,7 @@ public class AiChatResponse {
     private Long appointmentId;
     private String answer;
     private String toolName;
+    private String intent;
 
     public String getConversationId() {
         return conversationId;
@@ -45,5 +46,13 @@ public class AiChatResponse {
 
     public void setToolName(String toolName) {
         this.toolName = toolName;
+    }
+
+    public String getIntent() {
+        return intent;
+    }
+
+    public void setIntent(String intent) {
+        this.intent = intent;
     }
 }

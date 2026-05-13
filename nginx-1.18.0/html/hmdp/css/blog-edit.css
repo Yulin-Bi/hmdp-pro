@@ -11,9 +11,10 @@
 }
 .header-commit-btn{
     color: white;
-    background-color: #F63;
+    background: linear-gradient(135deg, #1f7aff, #155bd4);
     padding: 0 12px;
     border-radius: 15px;
+    box-shadow: 0 6px 14px rgba(31, 122, 255, 0.18);
 }
 .header-title i {
     font-size: 14px;
@@ -37,7 +38,8 @@
     border: 1px dashed #3a8ee6;
     border-radius: 5px;
     font-size: 30px;
-    color: #82848a;
+    color: #1f7aff;
+    background: #eef6ff;
     margin-right: 10px;
 }
 .upload-btn i {
@@ -143,7 +145,7 @@ textarea::placeholder {
 .search-input {
     width: 50%;
     flex-grow: 1;
-    background-color: #f1f1f1;
+    background-color: #eef6ff;
     line-height: 30px;
     align-items: center;
     border-radius: 20px;
@@ -154,7 +156,7 @@ textarea::placeholder {
     margin-left: 10px;
     border: 0;
     width: 100%;
-    background-color: #f1f1f1;
+    background-color: #eef6ff;
 }
 input:focus,textarea:focus {
     outline: none;

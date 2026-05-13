@@ -108,6 +108,7 @@ const util = {
 }
 
 ;(function () {
+  return;
   if (window.__aiChatWidgetLoaded) {
     return;
   }

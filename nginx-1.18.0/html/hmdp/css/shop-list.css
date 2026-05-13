@@ -3,7 +3,7 @@
     background-color: #fff;
 }
 #app{
-    background-color: #f1f1f1;
+    background-color: #f4f8ff;
 }
 .header{
     width: 100%;
@@ -11,11 +11,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 .header-back-btn{
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 24px;
     font-weight: bold;
 }
@@ -29,7 +30,7 @@
     width: 10%;
     text-align: center;
     font-size: 18px;
-    color: #ff6633;
+    color: #1f7aff;
 }
 .el-dropdown,.el-dropdown-menu__item {
     font-size: 12px;
@@ -41,6 +42,7 @@
     height: 6%;
     align-items: center;
     margin-bottom: 5px;
+    box-shadow: 0 6px 18px rgba(31, 122, 255, 0.06);
 }
 .sort-item {
     width: 20%;
@@ -49,15 +51,17 @@
 }
 .shop-list{
     height: 87%;
-    background-color: #f1f1f1;
+    background-color: #f4f8ff;
     overflow-y: auto;
 }
 .shop-box {
     display: flex;
     padding: 10px;
     margin-bottom: 5px;
-    border-radius: 3px;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
     background-color: #fff;
+    box-shadow: 0 8px 22px rgba(31, 122, 255, 0.06);
 }
 .shop-img {
     text-align: center;
@@ -66,7 +70,7 @@
 .shop-img img{
     width: 95px;
     height: 95px;
-    border-radius: 5px;
+    border-radius: 8px;
 }
 .shop-info {
     width: 65%;
@@ -74,6 +78,7 @@
 .shop-title {
     font-weight: bold;
     font-size: 14px;
+    color: #172033;
 }
 .shop-rate {
     display: flex;
@@ -93,7 +98,7 @@
     display: flex;
 }
 .shop-address i{
-    color: #6c6767;
+    color: #1f7aff;
 }
 .shop-address span{
     height: 20px;

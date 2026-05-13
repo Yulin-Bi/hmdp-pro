@@ -2,8 +2,24 @@ html {
     font-size: 12px;
     width: 100%;
 }
+:root {
+    --brand-primary: #1f7aff;
+    --brand-primary-dark: #155bd4;
+    --brand-primary-soft: #eaf3ff;
+    --brand-primary-pale: #f5f9ff;
+    --brand-accent: #0bb8a7;
+    --brand-warning: #f59e0b;
+    --text-primary: #172033;
+    --text-secondary: #64748b;
+    --line-soft: #dbeafe;
+    --page-bg: #f4f8ff;
+    --card-shadow: 0 8px 24px rgba(31, 122, 255, 0.08);
+}
 body{
     margin: 0;
+    color: var(--text-primary);
+    background: var(--page-bg);
+    font-family: Hiragino Sans GB, Arial, Helvetica, "\5B8B\4F53", sans-serif;
 }
 html,body,#app{
     height: 100%;
@@ -15,7 +31,11 @@ html,body,#app{
 }
 .el-tabs__active-bar {
     height: 4px;
-    background-image: linear-gradient(to right, #F63, #f5b9a2);
+    background-image: linear-gradient(to right, var(--brand-primary), #7ab8ff);
+}
+.el-tabs__item.is-active,
+.el-tabs__item:hover {
+    color: var(--brand-primary);
 }
 .foot {
     width: 100%;
@@ -23,19 +43,20 @@ html,body,#app{
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -6px 18px rgba(31, 122, 255, 0.08);
     position: absolute;
     bottom: 0;
+    background: #fff;
 }
 .foot .add-btn {
     width: 38px;
     height: 38px;
-    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 18px rgba(31, 122, 255, 0.18);
     border-radius: 18px;
 }
 .foot-box{
     width: 20%;
-    color: #82848a;
+    color: var(--text-secondary);
     text-align: center;
 }
 .foot-view {
@@ -49,11 +70,23 @@ html,body,#app{
     text-align: center;
 }
 .active{
-    color: #ff6633;
+    color: var(--brand-primary);
 }
 
-/*element-ui的评价星星间隙*/
+/* element-ui rate icon spacing */
 .el-rate__icon {
     margin-right: 0;
+}
+
+.el-button--primary,
+.el-button--primary:focus,
+.el-button--primary:hover {
+    background-color: var(--brand-primary);
+    border-color: var(--brand-primary);
+}
+
+.el-input__inner:focus,
+.el-textarea__inner:focus {
+    border-color: var(--brand-primary);
 }
 

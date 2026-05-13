@@ -20,6 +20,9 @@ import com.hmdp.service.IShopService;
 import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.Message;
@@ -45,11 +48,19 @@ import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
 import static com.hmdp.utils.RedisConstants.CACHE_SHOP_TTL;
 
 @Service
+@Slf4j
 public class AiChatServiceImpl implements IAiChatService {
 
     private static final String HISTORY_KEY_PREFIX = "ai:chat:history:";
     private static final String META_KEY_PREFIX = "ai:chat:meta:";
     private static final String SHOP_APPOINTMENT_TOPIC = "shop-appointment-topic";
+
+    private enum ChatIntent {
+        QUERY_SHOP,
+        RECOMMEND_SHOP,
+        BOOK_VISIT,
+        GENERAL
+    }
 
     private final SiliconFlowChatClient siliconFlowChatClient;
     private final AiProperties aiProperties;
@@ -91,9 +102,11 @@ public class AiChatServiceImpl implements IAiChatService {
 
         String conversationId = resolveConversationId(user.getId(), request.getConversationId());
         Long contextShopId = resolveContextShopId(user.getId(), request.getShopId());
+        ChatIntent intent = analyzeIntent(request.getMessage());
 
-        if (shouldHandleRecommendationLocally(request.getMessage())) {
+        if (intent == ChatIntent.RECOMMEND_SHOP && shouldHandleRecommendationLocally(request.getMessage())) {
             AiChatResponse result = handleLocalRecommendation(conversationId, contextShopId, request.getMessage());
+            result.setIntent(intent.name());
             saveTurn(user.getId(), request.getMessage(), result.getAnswer(), result.getShopId(), conversationId);
             return result;
         }
@@ -106,6 +119,7 @@ public class AiChatServiceImpl implements IAiChatService {
         JsonNode response = siliconFlowChatClient.chat(messages, toolDefinitions());
         JsonNode assistantMessage = response.path("choices").path(0).path("message");
         AiChatResponse result = handleAssistantMessage(user.getId(), conversationId, contextShopId, messages, assistantMessage);
+        result.setIntent(intent.name());
         saveTurn(user.getId(), request.getMessage(), result.getAnswer(), result.getShopId(), conversationId);
         return result;
     }
@@ -143,6 +157,7 @@ public class AiChatServiceImpl implements IAiChatService {
             }
             JsonNode followUp = siliconFlowChatClient.chat(messages, toolDefinitions());
             String answer = followUp.path("choices").path(0).path("message").path("content").asText("我已经帮你处理好了。");
+            answer = toUserFacingAnswer(answer);
             AiChatResponse response = new AiChatResponse();
             response.setConversationId(conversationId);
             response.setAnswer(answer);
@@ -153,11 +168,116 @@ public class AiChatServiceImpl implements IAiChatService {
         }
 
         String answer = assistantMessage.path("content").asText("抱歉，我暂时没有生成可用回复。");
+        answer = toUserFacingAnswer(answer);
         AiChatResponse response = new AiChatResponse();
         response.setConversationId(conversationId);
         response.setAnswer(answer);
         response.setShopId(contextShopId);
         return response;
+    }
+
+    private ChatIntent analyzeIntent(String message) {
+        if (StrUtil.isBlank(message)) {
+            return ChatIntent.GENERAL;
+        }
+        String text = message.trim().toLowerCase();
+        if (containsAny(text, "预约", "预订", "订座", "到店", "排队", "book")) {
+            return ChatIntent.BOOK_VISIT;
+        }
+        if (containsAny(text, "推荐", "附近", "有什么店", "有哪些店", "哪家店", "找店", "热门", "好吃", "排行")) {
+            return ChatIntent.RECOMMEND_SHOP;
+        }
+        if (containsAny(text, "几点", "营业", "关门", "开门", "地址", "在哪", "电话", "人均", "价格", "评分", "店铺", "这家店")) {
+            return ChatIntent.QUERY_SHOP;
+        }
+        return ChatIntent.GENERAL;
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        for (String keyword : keywords) {
+            if (text.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String toUserFacingAnswer(String answer) {
+        if (StrUtil.isBlank(answer)) {
+            return "抱歉，我暂时没有生成可用回复。";
+        }
+        String trimmed = answer.trim();
+        if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) {
+            return answer;
+        }
+        JsonNode data = safeParse(trimmed);
+        if (data == null || data.isMissingNode() || data.isNull() || data.isEmpty()) {
+            return answer;
+        }
+        if (data.has("success") && data.has("data")) {
+            data = data.path("data");
+        }
+        if (data.hasNonNull("answer")) {
+            return data.path("answer").asText();
+        }
+        if (data.has("matchedShop")) {
+            JsonNode shop = data.path("matchedShop");
+            List<String> lines = new ArrayList<>();
+            lines.add(data.path("message").asText("已查询到店铺信息。"));
+            appendShopLine(lines, shop, 1);
+            return String.join("\n", lines);
+        }
+        if (data.has("shops") && data.path("shops").isArray()) {
+            return formatShopListAnswer(data.path("message").asText("我给你推荐这几家店："), data.path("shops"));
+        }
+        if (data.has("candidates") && data.path("candidates").isArray()) {
+            return formatShopListAnswer(data.path("message").asText("找到多个匹配店铺，请确认："), data.path("candidates"));
+        }
+        if (data.hasNonNull("appointmentId")) {
+            return "预约已受理，预约单号：" + data.path("appointmentId").asText()
+                    + "。店铺会根据你提供的时间和电话进行确认。";
+        }
+        if (data.hasNonNull("error")) {
+            return data.path("error").asText();
+        }
+        if (data.hasNonNull("message")) {
+            return data.path("message").asText();
+        }
+        return answer;
+    }
+
+    private String formatShopListAnswer(String title, JsonNode shops) {
+        if (!shops.isArray() || shops.isEmpty()) {
+            return title;
+        }
+        List<String> lines = new ArrayList<>();
+        lines.add(title);
+        int limit = Math.min(shops.size(), 5);
+        for (int i = 0; i < limit; i++) {
+            appendShopLine(lines, shops.get(i), i + 1);
+        }
+        return String.join("\n", lines);
+    }
+
+    private void appendShopLine(List<String> lines, JsonNode shop, int index) {
+        StringBuilder line = new StringBuilder();
+        line.append(index).append(". ").append(shop.path("name").asText("未知店铺"));
+        List<String> parts = new ArrayList<>();
+        addPart(parts, shop, "area", "");
+        addPart(parts, shop, "address", "");
+        addPart(parts, shop, "openHours", "营业时间 ");
+        addPart(parts, shop, "avgPrice", "人均 ");
+        addPart(parts, shop, "score", "评分 ");
+        if (!parts.isEmpty()) {
+            line.append("（").append(String.join("，", parts)).append("）");
+        }
+        lines.add(line.toString());
+    }
+
+    private void addPart(List<String> parts, JsonNode node, String field, String prefix) {
+        if (node.hasNonNull(field) && StrUtil.isNotBlank(node.path(field).asText())) {
+            parts.add(prefix + node.path(field).asText());
+        }
     }
 
     private String executeTool(Long userId, String functionName, String arguments, Long fallbackShopId) {
@@ -256,15 +376,29 @@ public class AiChatServiceImpl implements IAiChatService {
                 contactPhone,
                 remark
         );
-        Message<ShopAppointmentMessage> mqMessage = MessageBuilder.withPayload(message).build();
-        rocketMQTemplate.syncSend(SHOP_APPOINTMENT_TOPIC, mqMessage);
+        sendAppointmentMessage(message);
 
         return JSONUtil.createObj()
                 .set("appointmentId", appointmentId)
                 .set("shopId", shop.getId())
                 .set("shopName", shop.getName())
                 .set("visitTime", visitTime.toString())
-                .set("message", "预约已受理，正在排队创建").toString();
+                .set("message", "预约已受理，预约单号：" + appointmentId)
+                .toString();
+    }
+
+    private void sendAppointmentMessage(ShopAppointmentMessage message) {
+        Message<ShopAppointmentMessage> mqMessage = MessageBuilder.withPayload(message).build();
+        rocketMQTemplate.asyncSend(SHOP_APPOINTMENT_TOPIC, mqMessage, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                log.error("预约消息发送失败，appointmentId: {}", message.getAppointmentId(), throwable);
+            }
+        });
     }
 
     private String recommendShops(Map<String, Object> args, Long fallbackShopId) {
@@ -397,39 +531,39 @@ public class AiChatServiceImpl implements IAiChatService {
     private List<Map<String, Object>> toolDefinitions() {
         List<Map<String, Object>> tools = new ArrayList<>();
         tools.add(toolDefinition("query_shop_info",
-                "查询店铺信息，适用于店铺营业时间、地址、均价、评分等咨询；支持 shopId、shopName 或关键词",
+                "Query shop info such as open hours, address, price and score; supports shopId, shopName or keyword.",
                 Map.of(
                         "type", "object",
                         "properties", Map.of(
-                                "shopId", Map.of("type", "integer", "description", "店铺id"),
-                                "shopName", Map.of("type", "string", "description", "店铺名称"),
-                                "keyword", Map.of("type", "string", "description", "店铺名称或关键词")
+                                "shopId", Map.of("type", "integer", "description", "shop id"),
+                                "shopName", Map.of("type", "string", "description", "shop name"),
+                                "keyword", Map.of("type", "string", "description", "shop name or keyword")
                         )
                 )));
         tools.add(toolDefinition("recommend_shops",
-                "推荐店铺，适用于热门店铺、附近店铺或同类店铺推荐",
+                "Recommend popular, nearby or similar shops.",
                 Map.of(
                         "type", "object",
                         "properties", Map.of(
-                                "typeId", Map.of("type", "integer", "description", "店铺类型id"),
-                                "keyword", Map.of("type", "string", "description", "店铺名称、商圈或关键词"),
-                                "area", Map.of("type", "string", "description", "商圈名称"),
-                                "x", Map.of("type", "number", "description", "经度"),
-                                "y", Map.of("type", "number", "description", "纬度"),
-                                "current", Map.of("type", "integer", "description", "分页页码"),
-                                "count", Map.of("type", "integer", "description", "推荐数量")
+                                "typeId", Map.of("type", "integer", "description", "shop type id"),
+                                "keyword", Map.of("type", "string", "description", "shop name, area or keyword"),
+                                "area", Map.of("type", "string", "description", "business area"),
+                                "x", Map.of("type", "number", "description", "longitude"),
+                                "y", Map.of("type", "number", "description", "latitude"),
+                                "current", Map.of("type", "integer", "description", "page number"),
+                                "count", Map.of("type", "integer", "description", "recommendation count")
                         )
                 )));
         tools.add(toolDefinition("book_shop_visit",
-                "预约用户到店，适用于确认到店时间和联系方式后创建预约；消息队列异步落库",
+                "Book a shop visit after visit time and contact phone are confirmed. Send the appointment to MQ first; the consumer persists it asynchronously.",
                 Map.of(
                         "type", "object",
                         "properties", Map.of(
-                                "shopId", Map.of("type", "integer", "description", "店铺id"),
-                                "shopName", Map.of("type", "string", "description", "店铺名称"),
-                                "visitTime", Map.of("type", "string", "description", "预约到店时间，格式例如 2026-04-30 18:00"),
-                                "contactPhone", Map.of("type", "string", "description", "联系电话"),
-                                "remark", Map.of("type", "string", "description", "备注")
+                                "shopId", Map.of("type", "integer", "description", "shop id"),
+                                "shopName", Map.of("type", "string", "description", "shop name"),
+                                "visitTime", Map.of("type", "string", "description", "visit time, for example 2026-04-30 18:00"),
+                                "contactPhone", Map.of("type", "string", "description", "contact phone"),
+                                "remark", Map.of("type", "string", "description", "remark")
                         ),
                         "required", List.of("visitTime", "contactPhone")
                 )));
@@ -450,13 +584,13 @@ public class AiChatServiceImpl implements IAiChatService {
 
     private Map<String, Object> systemMessage(Long shopId) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("你是黑马点评的智能客服，优先用简洁、自然的中文回答。\\n");
-        prompt.append("当用户想查询店铺信息时，调用 query_shop_info 工具；如果用户只说店铺名，也可以直接传 shopName。\n");
-        prompt.append("当用户想获得店铺推荐时，调用 recommend_shops 工具。\n");
-        prompt.append("当用户想预约到店时，调用 book_shop_visit 工具；如果缺少预约时间或联系电话，先追问补齐。\\n");
-        prompt.append("预约结果由消息队列异步创建，先告诉用户已受理。\n");
+        prompt.append("You are the smart customer service for HM Dianping. Reply in concise, natural Chinese.\n");
+        prompt.append("For shop info questions, call query_shop_info; if the user only gives a shop name, pass shopName.\n");
+        prompt.append("For shop recommendations, call recommend_shops.\n");
+        prompt.append("For shop visit booking, call book_shop_visit. If visit time or contact phone is missing, ask the user to provide it first.\n");
+        prompt.append("Appointments are sent to MQ first, then persisted asynchronously by the consumer.\n");
         if (shopId != null) {
-            prompt.append("当前页面店铺id：").append(shopId).append("，如果用户没有明确指定店铺，优先按当前店铺理解。\\n");
+            prompt.append("Current page shop id: ").append(shopId).append(". If the user does not specify a shop, prefer this current shop.\n");
         }
         Map<String, Object> message = new LinkedHashMap<>();
         message.put("role", "system");
@@ -553,7 +687,7 @@ public class AiChatServiceImpl implements IAiChatService {
     private Map<String, Object> userMessage(String message, Long shopId) {
         Map<String, Object> userMessage = new LinkedHashMap<>();
         userMessage.put("role", "user");
-        userMessage.put("content", shopId == null ? message : "当前店铺id=" + shopId + "。用户消息：" + message);
+        userMessage.put("content", shopId == null ? message : "Current shop id=" + shopId + ". User message: " + message);
         return userMessage;
     }
 

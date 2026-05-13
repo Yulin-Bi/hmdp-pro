@@ -5,11 +5,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 .header-back-btn{
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 22px;
 }
 .header-title {
@@ -21,6 +23,8 @@
 
 .voucher-container {
   padding: 0 16px 16px;
+  min-height: 94%;
+  background: linear-gradient(180deg, #f5f9ff 0%, #fff 48%);
 }
 .voucher-container .el-tabs__header {
   margin-bottom: 10px;
@@ -43,10 +47,11 @@
 .voucher-card {
   display: flex;
   background: #fff;
-  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
   margin-bottom: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 8px 24px rgba(31,122,255,0.08);
 }
 .voucher-card.expired {
   opacity: 0.55;
@@ -59,7 +64,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, #ff6633, #ff8a65);
+  background: linear-gradient(160deg, #1f7aff, #0bb8a7);
   color: #fff;
   padding: 14px 8px;
 }
@@ -95,17 +100,17 @@
 .voucher-title {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: #172033;
   margin-bottom: 2px;
 }
 .voucher-sub {
   font-size: 11px;
-  color: #999;
+  color: #64748b;
   margin-bottom: 4px;
 }
 .voucher-shop {
   font-size: 12px;
-  color: #666;
+  color: #64748b;
   margin-bottom: 6px;
 }
 .voucher-shop i {
@@ -120,26 +125,26 @@
 .voucher-source {
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 .source-sign {
-  background: #e8f5e9;
-  color: #4caf50;
+  background: #e0f2fe;
+  color: #0284c7;
 }
 .source-like {
-  background: #fce4ec;
-  color: #e91e63;
+  background: #ecfeff;
+  color: #0891b2;
 }
 .source-seckill {
-  background: #fff3e0;
-  color: #ff9800;
+  background: #e0f2fe;
+  color: #0284c7;
 }
 .voucher-status {
   font-size: 11px;
   font-weight: 600;
 }
 .status-available {
-  color: #ff6633;
+  color: #1f7aff;
 }
 .status-used {
   color: #999;

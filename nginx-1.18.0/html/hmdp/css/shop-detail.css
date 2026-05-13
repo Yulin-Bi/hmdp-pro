@@ -1,6 +1,7 @@
 
 .header {
     background-color: #fff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 
 .top-bar {
@@ -13,7 +14,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
     position: fixed;
     top: 0;
     z-index: 500;
@@ -21,7 +22,7 @@
 
 .header-back-btn {
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 24px;
     font-weight: bold;
 }
@@ -70,11 +71,11 @@
 }
 
 .shop-rank span {
-    color: #B15E2C;
+    color: #155bd4;
     font-size: 11px;
     background: linear-gradient(
-            -248deg, #FFEBCF 2%, #FFECDD 61%);
-    border-radius: 1px;
+            -248deg, #e0f2fe 2%, #eef6ff 61%);
+    border-radius: 4px;
     height: 20px;
     line-height: 20px;
     padding: 0 6px;
@@ -99,7 +100,7 @@
     margin-right: 3px;
     display: inline-block;
     border-radius: 7px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #dbeafe;
 }
 
 .shop-address {
@@ -113,7 +114,7 @@
 
 .shop-divider {
     height: 10px;
-    background-color: #f3f1f1;
+    background-color: #f4f8ff;
 }
 
 .shop-open-time {
@@ -141,14 +142,15 @@
 .voucher-icon {
     display: inline-block;
     line-height: 16px;
-    background-color: #f5a966;
+    background: linear-gradient(135deg, #1f7aff, #0bb8a7);
     color: white;
     padding: 0 4px 2px 4px;
 }
 
 .voucher-box {
-    background-color: #fff1f1;
-    border-radius: 5px;
+    background: linear-gradient(135deg, #eef6ff, #f8fbff);
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -192,7 +194,7 @@
 }
 
 .voucher-price {
-    color: #F63;
+    color: #1f7aff;
     display: flex;
     align-items: center;
 }
@@ -207,17 +209,20 @@
     font-size: 10px;
     padding: 0 5px;
     line-height: 10px;
-    background-color: #fce5e5;
+    background-color: #dbeafe;
+    color: #155bd4;
+    border-radius: 4px;
 }
 
 .voucher-btn {
-    background-color: #ff6633;
+    background: linear-gradient(135deg, #1f7aff, #155bd4);
     color: white;
     font-size: 14px;
     line-height: 30px;
     width: 65px;
     text-align: center;
     border-radius: 15px;
+    box-shadow: 0 6px 14px rgba(31, 122, 255, 0.2);
 }
 .seckill-box{
     display: flex;
@@ -231,16 +236,17 @@
 }
 .disable-btn{
     background-color: #adacab;
+    box-shadow: none;
 }
 .seckill-time{
-    color: #F63;
+    color: #1f7aff;
 }
 .seckill-stock {
     color: #adacab;
 }
 .seckill-stock span{
-    background-color: #fce5e5;
-    color: rgb(240, 51, 51);
+    background-color: #dbeafe;
+    color: #1d4ed8;
 }
 .copyright {
     color: #d1d1d1;
@@ -269,10 +275,11 @@
 }
 .comment-tags div {
     width: 25%;
-    border: 1px solid #427fc4;
+    border: 1px solid #7ab8ff;
     border-radius: 5px;
     text-align: center;
-    color: #427fc4;
+    color: #155bd4;
+    background: #eef6ff;
     padding: 5px 10px;
     margin-top: 7px;
 }
@@ -303,7 +310,7 @@
     font-size: 10px;
     padding: 0 10px;
     border-radius: 8px;
-    background-color: #f7b253;
+    background-color: #0bb8a7;
     color: white;
 }
 .comment-images {

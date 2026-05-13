@@ -5,11 +5,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #ff6633;
+    border-bottom: 2px solid #1f7aff;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(31, 122, 255, 0.08);
 }
 .header-back-btn{
     width: 10%;
-    color: #ff6633;
+    color: #1f7aff;
     font-size: 22px;
 }
 .header-title {
@@ -21,6 +23,8 @@
 
 .sign-container {
   padding: 16px;
+  min-height: 94%;
+  background: linear-gradient(180deg, #f5f9ff 0%, #fff 46%);
 }
 
 /* 月份导航 */
@@ -32,7 +36,7 @@
 }
 .month-nav i {
   font-size: 20px;
-  color: #333;
+  color: #1f7aff;
   cursor: pointer;
   padding: 8px;
 }
@@ -46,6 +50,7 @@
   margin: 0 24px;
   min-width: 120px;
   text-align: center;
+  color: #172033;
 }
 
 /* 星期表头 */
@@ -65,6 +70,11 @@
 .calendar-grid {
   display: flex;
   flex-wrap: wrap;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(31, 122, 255, 0.06);
 }
 .day-cell {
   width: calc(100% / 7);
@@ -85,17 +95,17 @@
   color: #ddd;
 }
 .day-cell.signed {
-  background: #e8f5e9;
-  color: #4caf50;
+  background: #e0f2fe;
+  color: #0284c7;
   font-weight: 600;
 }
 .day-cell.signed i {
   font-size: 10px;
-  color: #4caf50;
+  color: #0284c7;
   margin-top: 2px;
 }
 .day-cell.today {
-  background: #ff6633;
+  background: linear-gradient(135deg, #1f7aff, #0bb8a7);
   color: #fff;
   font-weight: 700;
   border-radius: 50%;
@@ -114,8 +124,10 @@
   justify-content: center;
   margin: 24px 0;
   padding: 16px;
-  background: #f5f5f5;
+  background: #fff;
+  border: 1px solid #dbeafe;
   border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(31, 122, 255, 0.06);
 }
 .stat-item {
   display: flex;
@@ -126,7 +138,7 @@
 .stat-num {
   font-size: 28px;
   font-weight: 700;
-  color: #ff6633;
+  color: #1f7aff;
 }
 .stat-label {
   font-size: 12px;
@@ -145,11 +157,12 @@
   align-items: center;
   justify-content: center;
   padding: 12px 16px;
-  background: #fff8e1;
+  background: #eef6ff;
+  border: 1px solid #dbeafe;
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #f57c00;
+  color: #155bd4;
 }
 .reward-hint i {
   margin-right: 6px;
@@ -162,21 +175,24 @@
   height: 48px;
   border: none;
   border-radius: 24px;
-  background: linear-gradient(135deg, #ff6633, #ff8a65);
+  background: linear-gradient(135deg, #1f7aff, #7ab8ff);
   color: #fff;
   font-size: 17px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(31, 122, 255, 0.24);
 }
 .sign-btn.signed {
   background: #e0e0e0;
   color: #999;
   cursor: default;
+  box-shadow: none;
 }
 .sign-btn.disabled {
   background: #e0e0e0;
   color: #ccc;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* 适配 info.html 中嵌入的样式 */
