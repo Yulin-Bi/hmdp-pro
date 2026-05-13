@@ -1278,6 +1278,15 @@ CREATE TABLE `tb_voucher`  (
 -- Records of tb_voucher
 -- ----------------------------
 INSERT INTO `tb_voucher` VALUES (1, 1, '50元代金券', '周一至周日均可使用', '全场通用\\n无需预约\\n可无限叠加\\不兑现、不找零\\n仅限堂食', 4750, 5000, 0, 1, '2022-01-04 09:42:39', '2022-01-04 09:43:31');
+INSERT INTO `tb_voucher` VALUES (2, 1, '30元代金券', '点赞达人专属', '全场通用\\n无需预约\\n仅限堂食', 2500, 3000, 0, 1, '2022-01-04 09:42:39', '2022-01-04 09:43:31');
+INSERT INTO `tb_voucher` VALUES (3, 1, '6元秒杀券', '限时抢购', '全场通用\\n无需预约\\n每人限购1张', 599, 1000, 1, 1, '2022-01-04 09:42:39', '2022-01-04 09:43:31');
+INSERT INTO `tb_voucher` VALUES (4, 1, '10元秒杀券', '限时抢购', '全场通用\\n无需预约\\n每人限购1张', 899, 1500, 1, 1, '2022-01-04 09:42:39', '2022-01-04 09:43:31');
+
+-- ----------------------------
+-- Records of tb_seckill_voucher
+-- ----------------------------
+INSERT INTO `tb_seckill_voucher` VALUES (3, 100, '2022-01-04 09:42:39', '2024-01-01 00:00:00', '2030-12-31 23:59:59', '2022-01-04 09:43:31');
+INSERT INTO `tb_seckill_voucher` VALUES (4, 100, '2022-01-04 09:42:39', '2024-01-01 00:00:00', '2030-12-31 23:59:59', '2022-01-04 09:43:31');
 
 -- ----------------------------
 -- Table structure for tb_voucher_order
@@ -1300,5 +1309,41 @@ CREATE TABLE `tb_voucher_order`  (
 -- ----------------------------
 -- Records of tb_voucher_order
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for tb_reward_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_reward_rule`;
+CREATE TABLE `tb_reward_rule`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `reward_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '触发类型：sign-签到，like-点赞',
+  `threshold` int(11) NOT NULL COMMENT '触发阈值：签到累计天数 / 点赞数',
+  `voucher_id` bigint(20) UNSIGNED NOT NULL COMMENT '发放的优惠券ID',
+  `shop_id` bigint(20) UNSIGNED NULL DEFAULT NULL COMMENT '店铺ID（like类型关联店铺，sign为NULL）',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '启用状态：0-禁用，1-启用',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of tb_reward_rule
+-- ----------------------------
+INSERT INTO `tb_reward_rule` VALUES (1, 'sign', 7, 1, NULL, 1);
+INSERT INTO `tb_reward_rule` VALUES (2, 'like', 100, 2, 1, 1);
+
+-- ----------------------------
+-- Table structure for tb_reward_record
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_reward_record`;
+CREATE TABLE `tb_reward_record`  (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '领券用户ID',
+  `reward_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '奖励类型：sign-签到，like-点赞',
+  `target_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '目标标识（sign为yyyyMM月份，like为blog_id）',
+  `voucher_id` bigint(20) UNSIGNED NOT NULL COMMENT '发放的优惠券ID',
+  `voucher_order_id` bigint(20) UNSIGNED NOT NULL COMMENT '生成的券订单ID',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发放时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_user_reward_target` (`user_id`, `reward_type`, `target_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
 
 SET FOREIGN_KEY_CHECKS = 1;

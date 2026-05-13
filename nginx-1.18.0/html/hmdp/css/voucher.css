@@ -1,0 +1,164 @@
+.header{
+    width: 100%;
+    line-height: 40px;
+    height: 6%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #ff6633;
+}
+.header-back-btn{
+    width: 10%;
+    color: #ff6633;
+    font-size: 22px;
+}
+.header-title {
+    width: 90%;
+    text-align: center;
+    font-size: 18px;
+    font-family: Hiragino Sans GB,Arial,Helvetica,"\5B8B\4F53",sans-serif;
+}
+
+.voucher-container {
+  padding: 0 16px 16px;
+}
+.voucher-container .el-tabs__header {
+  margin-bottom: 10px;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #bbb;
+}
+.empty i {
+  font-size: 48px;
+}
+.empty p {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* 券卡片 */
+.voucher-card {
+  display: flex;
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.voucher-card.expired {
+  opacity: 0.55;
+}
+
+.voucher-left {
+  width: 110px;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #ff6633, #ff8a65);
+  color: #fff;
+  padding: 14px 8px;
+}
+.voucher-card.expired .voucher-left {
+  background: linear-gradient(160deg, #bbb, #ddd);
+}
+.voucher-value {
+  display: flex;
+  align-items: baseline;
+}
+.currency {
+  font-size: 14px;
+  font-weight: 600;
+}
+.amount {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+.voucher-condition {
+  font-size: 11px;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+.voucher-right {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.voucher-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+.voucher-sub {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+.voucher-shop {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+}
+.voucher-shop i {
+  font-size: 12px;
+}
+.voucher-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.voucher-source {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.source-sign {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+.source-like {
+  background: #fce4ec;
+  color: #e91e63;
+}
+.source-seckill {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.voucher-status {
+  font-size: 11px;
+  font-weight: 600;
+}
+.status-available {
+  color: #ff6633;
+}
+.status-used {
+  color: #999;
+}
+.status-expired {
+  color: #ccc;
+}
+.voucher-time {
+  font-size: 11px;
+  color: #bbb;
+}
+
+/* 适配 info.html 中嵌入 */
+@media screen and (max-width: 400px) {
+  .voucher-left {
+    width: 90px;
+    min-width: 90px;
+  }
+  .amount {
+    font-size: 26px;
+  }
+}

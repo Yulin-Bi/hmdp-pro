@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>我的优惠券</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link href="./css/voucher.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+    <div class="header-title">我的优惠券</div>
+  </div>
+
+  <div class="voucher-container">
+    <el-tabs v-model="activeTab" @tab-click="onTabChange">
+      <el-tab-pane label="全部" name="all"></el-tab-pane>
+      <el-tab-pane label="待使用" name="available"></el-tab-pane>
+      <el-tab-pane label="已使用" name="used"></el-tab-pane>
+      <el-tab-pane label="已过期" name="expired"></el-tab-pane>
+    </el-tabs>
+
+    <div v-if="filteredVouchers.length === 0" class="empty">
+      <i class="el-icon-tickets"></i>
+      <p>暂无优惠券</p>
+    </div>
+
+    <div v-for="v in filteredVouchers" :key="v.id" class="voucher-card" :class="cardClass(v)">
+      <div class="voucher-left">
+        <div class="voucher-value">
+          <span class="currency">¥</span>
+          <span class="amount">{{ formatMoney(v.actualValue) }}</span>
+        </div>
+        <div class="voucher-condition" v-if="v.rules">满{{ formatMoney(v.payValue) }}可用</div>
+        <div class="voucher-condition" v-else>无门槛</div>
+      </div>
+      <div class="voucher-right">
+        <div class="voucher-title">{{ v.title }}</div>
+        <div class="voucher-sub" v-if="v.subTitle">{{ v.subTitle }}</div>
+        <div class="voucher-shop" v-if="v.shopName">
+          <i class="el-icon-location-outline"></i> {{ v.shopName }}
+        </div>
+        <div class="voucher-meta">
+          <span class="voucher-source" :class="'source-' + v.source">{{ sourceLabel(v.source) }}</span>
+          <span class="voucher-status" :class="'status-' + statusKey(v)">{{ statusLabel(v) }}</span>
+        </div>
+        <div class="voucher-time">有效期至 {{ formatDate(v.endTime) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <foot-bar :active-btn="4"></foot-bar>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script src="./js/footer.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      activeTab: 'all',
+      vouchers: [],
+    },
+    created() {
+      this.loadVouchers();
+    },
+    computed: {
+      filteredVouchers() {
+        const now = new Date();
+        let list = this.vouchers;
+        if (this.activeTab === 'available') {
+          list = list.filter(v => v.status === 1 || v.status === 2);
+        } else if (this.activeTab === 'used') {
+          list = list.filter(v => v.status === 3);
+        } else if (this.activeTab === 'expired') {
+          list = list.filter(v => {
+            if (v.status === 4 || v.status === 5 || v.status === 6) return true;
+            if (v.endTime && new Date(v.endTime) < now) return true;
+            return false;
+          });
+        }
+        return list;
+      }
+    },
+    methods: {
+      goBack() {
+        history.back();
+      },
+      loadVouchers() {
+        axios.get("/voucher-order/me")
+            .then(({ data }) => {
+              this.vouchers = data || [];
+            })
+            .catch(() => {
+              this.vouchers = [];
+            });
+      },
+      onTabChange() {},
+      formatMoney(value) {
+        return util.formatPrice(value);
+      },
+      sourceLabel(source) {
+        const map = { sign: '签到奖励', like: '点赞奖励', seckill: '秒杀抢购' };
+        return map[source] || source;
+      },
+      statusLabel(v) {
+        const now = new Date();
+        if (v.status === 1 || v.status === 2) {
+          if (v.endTime && new Date(v.endTime) < now) return '已过期';
+          return '待使用';
+        }
+        if (v.status === 3) return '已使用';
+        if (v.status === 4) return '已取消';
+        if (v.status >= 5) return '已退款';
+        return '';
+      },
+      statusKey(v) {
+        const now = new Date();
+        if (v.status === 1 || v.status === 2) {
+          if (v.endTime && new Date(v.endTime) < now) return 'expired';
+          return 'available';
+        }
+        if (v.status === 3) return 'used';
+        return 'expired';
+      },
+      cardClass(v) {
+        const key = this.statusKey(v);
+        return key === 'expired' ? 'expired' : '';
+      },
+      formatDate(dateStr) {
+        if (!dateStr) return '--';
+        const d = new Date(dateStr);
+        return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
+      }
+    }
+  })
+</script>
+</body>
+</html>

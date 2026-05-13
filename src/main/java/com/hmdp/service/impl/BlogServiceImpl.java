@@ -5,6 +5,7 @@ import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.RewardMessage;
 import com.hmdp.dto.ScrollResult;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
@@ -17,8 +18,11 @@ import com.hmdp.service.IFollowService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,6 +43,7 @@ import static com.hmdp.utils.RedisConstants.FEED_KEY;
  * @author 虎哥
  * @since 2021-12-22
  */
+@Slf4j
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IBlogService {
 
@@ -50,6 +55,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Resource
     private IFollowService followService;
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
 
     // 根据博客id查询详情
     @Override
@@ -207,6 +215,22 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
             // 为什么分数用时间戳：时间戳作为 score 可以按点赞时间先后排序 最新点赞的用户排在前
             if (isSuccess){
                 stringRedisTemplate.opsForZSet().add(BLOG_LIKED_KEY + id, userId.toString(), System.currentTimeMillis());
+            }
+
+            // 3、检查点赞数是否达标，发送奖励消息
+            try {
+                Long likeCount = stringRedisTemplate.opsForZSet().zCard(BLOG_LIKED_KEY + id);
+                if (likeCount != null && likeCount >= 100) {
+                    Blog blog = getById(id);
+                    if (blog != null) {
+                        RewardMessage message = new RewardMessage(blog.getUserId(), "like", id.toString());
+                        rocketMQTemplate.syncSend("reward-topic",
+                                MessageBuilder.withPayload(message).build());
+                        log.debug("发送点赞奖励消息成功，blogId:{}, authorId:{}, likeCount:{}", id, blog.getUserId(), likeCount);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("发送点赞奖励消息异常，blogId:{}", id, e);
             }
         } else {
             // 3、已点赞则取消点赞

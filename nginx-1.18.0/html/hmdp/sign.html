@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>每日签到</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link href="./css/sign.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+    <div class="header-title">每日签到</div>
+  </div>
+
+  <div class="sign-container">
+    <!-- 月份导航 -->
+    <div class="month-nav">
+      <i class="el-icon-arrow-left" @click="prevMonth"></i>
+      <span class="month-label">{{ yearMonth }}</span>
+      <i class="el-icon-arrow-right" :class="{disabled: isCurrentMonth}" @click="nextMonth"></i>
+    </div>
+
+    <!-- 星期表头 -->
+    <div class="weekday-row">
+      <span v-for="w in weekdays" :key="w">{{ w }}</span>
+    </div>
+
+    <!-- 日历格子 -->
+    <div class="calendar-grid">
+      <div v-for="(day, idx) in calendarDays" :key="idx"
+           :class="dayClass(day)">
+        <span v-if="day > 0">{{ day }}</span>
+        <i v-if="day > 0 && isSigned(day)" class="el-icon-check"></i>
+      </div>
+    </div>
+
+    <!-- 签到统计 -->
+    <div class="sign-stats">
+      <div class="stat-item">
+        <span class="stat-num">{{ totalCount }}</span>
+        <span class="stat-label">本月累计</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num">{{ continuousCount }}</span>
+        <span class="stat-label">连续签到</span>
+      </div>
+    </div>
+
+    <!-- 奖励提示 -->
+    <div class="reward-hint" v-if="rewardHint">
+      <i class="el-icon-present"></i>
+      <span>{{ rewardHint }}</span>
+    </div>
+
+    <!-- 签到按钮 -->
+    <button class="sign-btn" :class="{signed: signedToday, disabled: isFutureMonth}"
+            :disabled="signedToday || isFutureMonth"
+            @click="doSign">
+      {{ signedToday ? '今日已签到' : '签到' }}
+    </button>
+  </div>
+
+  <foot-bar :active-btn="4"></foot-bar>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script src="./js/footer.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      weekdays: ['日', '一', '二', '三', '四', '五', '六'],
+      yearMonth: '',
+      displayYear: 2026,
+      displayMonth: 5,
+      daysInMonth: 31,
+      firstDayOfWeek: 0,
+      calendarDays: [],
+      dailyStatus: [],
+      totalCount: 0,
+      continuousCount: 0,
+      signedToday: false,
+      rewardHint: '',
+      isCurrentMonth: true,
+      isFutureMonth: false,
+      today: new Date()
+    },
+    created() {
+      const now = new Date();
+      this.displayYear = now.getFullYear();
+      this.displayMonth = now.getMonth() + 1;
+      this.todayYear = now.getFullYear();
+      this.todayMonth = now.getMonth() + 1;
+      this.todayDate = now.getDate();
+      this.loadSignData();
+    },
+    methods: {
+      goBack() {
+        history.back();
+      },
+      prevMonth() {
+        if (this.displayMonth === 1) {
+          this.displayYear--;
+          this.displayMonth = 12;
+        } else {
+          this.displayMonth--;
+        }
+        this.loadSignData();
+      },
+      nextMonth() {
+        if (this.isCurrentMonth || this.isFutureMonth) return;
+        if (this.displayMonth === 12) {
+          this.displayYear++;
+          this.displayMonth = 1;
+        } else {
+          this.displayMonth++;
+        }
+        this.loadSignData();
+      },
+      loadSignData() {
+        const m = this.displayMonth < 10 ? '0' + this.displayMonth : '' + this.displayMonth;
+        const monthStr = this.displayYear + m;
+        this.yearMonth = this.displayYear + '年' + this.displayMonth + '月';
+
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1;
+        this.isCurrentMonth = this.displayYear === curYear && this.displayMonth === curMonth;
+        this.isFutureMonth = this.displayYear > curYear ||
+            (this.displayYear === curYear && this.displayMonth > curMonth);
+
+        axios.get("/user/sign/count", { params: { month: monthStr } })
+            .then(({ data }) => {
+              if (data) {
+                this.dailyStatus = data.dailyStatus || [];
+                this.totalCount = data.totalCount || 0;
+                this.continuousCount = data.continuousCount || 0;
+                if (data.reward) {
+                  this.rewardHint = data.reward.description || '';
+                } else {
+                  this.rewardHint = '';
+                }
+              }
+              this.buildCalendar();
+              if (this.isCurrentMonth) {
+                this.signedToday = this.dailyStatus[this.todayDate - 1] === 1;
+              } else {
+                this.signedToday = true;
+              }
+            })
+            .catch(() => {
+              this.dailyStatus = [];
+              this.totalCount = 0;
+              this.continuousCount = 0;
+              this.rewardHint = '';
+              this.buildCalendar();
+            });
+      },
+      buildCalendar() {
+        const firstDay = new Date(this.displayYear, this.displayMonth - 1, 1);
+        this.firstDayOfWeek = firstDay.getDay();
+        const lastDay = new Date(this.displayYear, this.displayMonth, 0);
+        this.daysInMonth = lastDay.getDate();
+
+        const days = [];
+        for (let i = 0; i < this.firstDayOfWeek; i++) {
+          days.push(0);
+        }
+        for (let d = 1; d <= this.daysInMonth; d++) {
+          days.push(d);
+        }
+        this.calendarDays = days;
+      },
+      isSigned(day) {
+        return this.dailyStatus[day - 1] === 1;
+      },
+      dayClass(day) {
+        if (day === 0) return 'day-cell empty';
+        const classes = ['day-cell'];
+        if (this.isSigned(day)) classes.push('signed');
+        if (this.isCurrentMonth && day === this.todayDate) classes.push('today');
+        if (this.isFutureMonth) classes.push('future');
+        else if (this.isCurrentMonth && day > this.todayDate) classes.push('future');
+        return classes.join(' ');
+      },
+      doSign() {
+        axios.post("/user/sign")
+            .then(() => {
+              this.$message.success('签到成功！');
+              this.loadSignData();
+            })
+            .catch(err => {
+              this.$message.error(typeof err === 'string' ? err : (err.response?.data?.errorMsg || '签到失败'));
+            });
+      }
+    }
+  })
+</script>
+</body>
+</html>

@@ -60,17 +60,27 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
         stringRedisTemplate.opsForValue().set(SECKILL_STOCK_KEY + voucher.getId(), voucher.getStock().toString());
     }
 
-    // 每次重启服务把数据库中的秒杀库存加载到redis中
+    // 每次重启服务把秒杀库存和普通券库存加载到redis中
     @PostConstruct
     private void loadSeckillStocks() {
-        List<SeckillVoucher> vouchers = seckillVoucherService.list();
-        for (SeckillVoucher sv : vouchers) {
+        // 1. 加载秒杀券库存
+        List<SeckillVoucher> seckillVouchers = seckillVoucherService.list();
+        for (SeckillVoucher sv : seckillVouchers) {
             if (sv.getEndTime().isAfter(LocalDateTime.now()) && sv.getStock() > 0) {
                 String key = SECKILL_STOCK_KEY + sv.getVoucherId();
                 Boolean hasKey = stringRedisTemplate.hasKey(key);
                 if (!hasKey) {
                     stringRedisTemplate.opsForValue().set(key, sv.getStock().toString());
                 }
+            }
+        }
+        // 2. 为普通券（无秒杀记录）设置默认库存
+        List<Voucher> regularVouchers = getBaseMapper().selectList(null);
+        for (Voucher v : regularVouchers) {
+            String key = SECKILL_STOCK_KEY + v.getId();
+            Boolean hasKey = stringRedisTemplate.hasKey(key);
+            if (!hasKey && v.getStatus() == 1) {
+                stringRedisTemplate.opsForValue().set(key, "9999");
             }
         }
     }

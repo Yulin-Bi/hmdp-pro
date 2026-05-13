@@ -107,7 +107,7 @@ public class UserController {
 
     // 签到统计
     @GetMapping("/sign/count")
-    public Result signCount(){
-        return userService.signCount();
+    public Result signCount(@RequestParam(value = "month", required = false) String month){
+        return userService.signCount(month);
     }
 }

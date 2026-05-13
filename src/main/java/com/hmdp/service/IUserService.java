@@ -23,6 +23,6 @@ public interface IUserService extends IService<User> {
     // 签到功能
     Result sign();
 
-    // 获取签到次数
-    Result signCount();
+    // 获取签到次数（支持按月份查询）
+    Result signCount(String month);
 }

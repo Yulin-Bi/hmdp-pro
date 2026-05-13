@@ -48,7 +48,7 @@
   </div>
   <div class="shop-list" @scroll="onScroll">
     <div class="shop-box" v-for="s in shops" :key="s.id" @click="toDetail(s.id)">
-      <div class="shop-img"><img :src="s.images" alt=""></div>
+      <div class="shop-img"><img :src="s.images" alt="" @error="e => e.target.src='/imgs/icons/default-icon.png'"></div>
       <div class="shop-info">
         <div class="shop-title shop-item">{{s.name}}</div>
         <div class="shop-rate shop-item" >

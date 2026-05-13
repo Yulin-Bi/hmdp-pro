@@ -90,6 +90,8 @@
           </div>
         </div>
       </el-tab-pane>
+      <el-tab-pane label="签到" name="5"></el-tab-pane>
+      <el-tab-pane label="优惠券" name="6"></el-tab-pane>
     </el-tabs>
   </div>
   <foot-bar :active-btn="4"></foot-bar>
@@ -199,6 +201,10 @@
       handleClick(r) {
         if (r.name === '4') {
           this.queryBlogsOfFollow(true);
+        } else if (r.name === '5') {
+          location.href = 'sign.html';
+        } else if (r.name === '6') {
+          location.href = 'voucher.html';
         }
       },
       addLike(b) {

@@ -2,13 +2,21 @@ package com.hmdp.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.VoucherOrderDTO;
+import com.hmdp.entity.RewardRecord;
 import com.hmdp.entity.SeckillVoucher;
+import com.hmdp.entity.Shop;
+import com.hmdp.entity.Voucher;
 import com.hmdp.entity.VoucherOrder;
 import com.hmdp.entity.VoucherOrderMessage;
+import com.hmdp.mapper.RewardRecordMapper;
 import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
+import com.hmdp.service.IShopService;
 import com.hmdp.service.IVoucherOrderService;
+import com.hmdp.service.IVoucherService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.SimpleRedisLock;
@@ -36,6 +44,7 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +79,15 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+
+    @Resource
+    private IVoucherService voucherService;
+
+    @Resource
+    private IShopService shopService;
+
+    @Resource
+    private RewardRecordMapper rewardRecordMapper;
 
     // lua脚本定义引入
     public static final DefaultRedisScript<Long> SECKILL_SCRIPT;
@@ -326,6 +344,59 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         // 保存订单
         save(order);
         log.info("订单创建成功，orderId: {}", order.getId());
+    }
+
+    @Override
+    public List<VoucherOrderDTO> queryMyVouchers(Long userId) {
+        List<VoucherOrderDTO> result = new ArrayList<>();
+
+        List<VoucherOrder> orders = query()
+                .eq("user_id", userId)
+                .orderByDesc("create_time")
+                .list();
+
+        for (VoucherOrder order : orders) {
+            VoucherOrderDTO dto = new VoucherOrderDTO();
+            dto.setId(order.getId());
+            dto.setVoucherId(order.getVoucherId());
+            dto.setStatus(order.getStatus());
+            dto.setCreateTime(order.getCreateTime());
+
+            Voucher voucher = voucherService.getById(order.getVoucherId());
+            if (voucher != null) {
+                dto.setTitle(voucher.getTitle());
+                dto.setSubTitle(voucher.getSubTitle());
+                dto.setPayValue(voucher.getPayValue());
+                dto.setActualValue(voucher.getActualValue());
+                dto.setRules(voucher.getRules());
+                dto.setShopId(voucher.getShopId());
+
+                if (voucher.getShopId() != null) {
+                    Shop shop = shopService.getById(voucher.getShopId());
+                    if (shop != null) {
+                        dto.setShopName(shop.getName());
+                    }
+                }
+            }
+
+            SeckillVoucher seckillVoucher = seckillVoucherService.getById(order.getVoucherId());
+            if (seckillVoucher != null) {
+                dto.setBeginTime(seckillVoucher.getBeginTime());
+                dto.setEndTime(seckillVoucher.getEndTime());
+            }
+
+            QueryWrapper<RewardRecord> recordWrapper = new QueryWrapper<>();
+            recordWrapper.eq("voucher_order_id", order.getId());
+            RewardRecord record = rewardRecordMapper.selectOne(recordWrapper);
+            if (record != null) {
+                dto.setSource(record.getRewardType());
+            } else {
+                dto.setSource("seckill");
+            }
+
+            result.add(dto);
+        }
+        return result;
     }
 }
 

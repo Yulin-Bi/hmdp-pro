@@ -4,6 +4,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>黑马点评</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <!-- 引入样式 -->
   <link rel="stylesheet" href="./css/element.css">
 
@@ -40,15 +43,15 @@
     </div>
     <div class="shop-images">
       <div v-for="(s,i) in shop.images" :key="i">
-        <img :src="s" alt="">
+        <img :src="s" alt="" @error="e => e.target.src='/imgs/icons/default-icon.png'">
       </div>
     </div>
     <div class="shop-address">
       <div><i class="el-icon-map-location"></i></div>
       <span>{{shop.address}}</span>
       <div style="width: 10px; flex-grow: 2; text-align: center; color: #e1e2e3">|</div>
-      <div style="margin: 0 5px"><img src="https://p0.meituan.net/travelcube/bf684aa196c870810655e45b1e52ce843484.png@24w_16h_40q" alt=""></div>
-      <div><img src="https://p0.meituan.net/travelcube/9277ace32123e0c9f59dedf4407892221566.png@24w_24h_40q" alt=""></div>
+      <div style="margin: 0 5px"><img src="https://p0.meituan.net/travelcube/bf684aa196c870810655e45b1e52ce843484.png@24w_16h_40q" alt="" onerror="this.style.display='none'"></div>
+      <div><img src="https://p0.meituan.net/travelcube/9277ace32123e0c9f59dedf4407892221566.png@24w_24h_40q" alt="" onerror="this.style.display='none'"></div>
     </div>
   </div>
   <div class="shop-divider"></div>
@@ -73,15 +76,15 @@
       <div class="voucher-left">
         <div class="voucher-title">{{v.title}}</div>
         <div class="voucher-subtitle">{{v.subTitle}}</div>
-        <div class="voucher-price"><div>￥ {{util.formatPrice(v.payValue)}}</div>  <span>{{(v.payValue*10)/v.actualValue}}折</span></div>
+        <div class="voucher-price"><div>￥ {{util.formatPrice(v.payValue)}}</div>  <span>{{formatDiscount(v)}}折</span></div>
       </div>
       <div class="voucher-right">
         <div v-if="v.type" class="seckill-box">
-          <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || v.stock < 1}" @click="seckill(v)">限时抢购</div>
-          <div class="seckill-stock">剩余 <span>{{v.stock}}</span> 张</div>
+          <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || isEnd(v) || (v.stock != null && v.stock < 1)}" @click="seckill(v)">限时抢购</div>
+          <div class="seckill-stock">剩余 <span>{{v.stock || 0}}</span> 张</div>
           <div class="seckill-time">{{formatTime(v)}}</div>
         </div>
-        <div class="voucher-btn" v-else>抢购</div>
+        <div class="voucher-btn" v-else @click="seckill(v)">抢购</div>
       </div>
     </div>
   </div>
@@ -105,7 +108,7 @@
     <div class="comment-list">
       <div class="comment-box" v-for="i in 3" :key="i">
         <div class="comment-icon">
-          <img src="https://p0.meituan.net/userheadpicbackend/57e44d6eba01aad0d8d711788f30a126549507.jpg%4048w_48h_1e_1c_1l%7Cwatermark%3D0" alt="">
+          <img src="https://p0.meituan.net/userheadpicbackend/57e44d6eba01aad0d8d711788f30a126549507.jpg%4048w_48h_1e_1c_1l%7Cwatermark%3D0" alt="" onerror="this.src='/imgs/icons/default-icon.png'">
         </div>
         <div class="comment-info">
           <div class="comment-user">叶小乙 <span>Lv5</span></div>
@@ -117,10 +120,10 @@
             某平台上买的券，价格可以当工作餐吃，虽然价格便宜，但是这家店一点都没有...
           </div>
           <div class="comment-images">
-            <img src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
-            <img src="https://qcloud.dpfile.com/pc/sZ5q-zgglv4VXEWU71xCFjnLM_jUHq-ylq0GKivtrz3JksWQ1f7oBWZsxm1DWgcaGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
-            <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
-            <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
+            <img src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg" alt="" onerror="this.style.display='none'">
+            <img src="https://qcloud.dpfile.com/pc/sZ5q-zgglv4VXEWU71xCFjnLM_jUHq-ylq0GKivtrz3JksWQ1f7oBWZsxm1DWgcaGybIjx5eX6WNgCPvcASYAw.jpg" alt="" onerror="this.style.display='none'">
+            <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="" onerror="this.style.display='none'">
+            <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="" onerror="this.style.display='none'">
           </div>
           <div>
             浏览641 &nbsp;&nbsp;&nbsp;&nbsp;评论5
@@ -168,7 +171,11 @@
       queryShopById(shopId) {
         axios.get("/shop/" + shopId)
         .then(({data}) => {
-          data.images = data.images.split(",")
+          if (data.images) {
+            data.images = data.images.split(",")
+          } else {
+            data.images = []
+          }
           this.shop = data
         })
         .catch(this.$message.error)
@@ -183,19 +190,26 @@
       formatTime(v){
         let b = new Date(v.beginTime);
         let e = new Date(v.endTime);
-        return b.getMonth() + 1 + "月" + b.getDate() + "日 "
-          +  b.getHours() + ":" + this.formatMinutes(b.getMinutes())
-          + " ~ "/*  + e.getMonth() + 1 + "月" + e.getDate() + "日 " */
-          +  e.getHours() + ":" + this.formatMinutes(e.getMinutes());
+        return (b.getMonth() + 1) + '月' + b.getDate() + '日'
+          + b.getHours() + ':' + this.formatMinutes(b.getMinutes())
+          + ' ~ '
+          + e.getHours() + ':' + this.formatMinutes(e.getMinutes());
       },
       formatMinutes(m){
         if(m < 10) m = "0" + m
         return m;
       },
+      formatDiscount(v) {
+        if (!v || !v.actualValue) return '';
+        const discount = Number(v.payValue) * 10 / Number(v.actualValue);
+        return Number(discount.toFixed(1)).toString();
+      },
       isNotBegin(v){
+        if (!v.beginTime) return false;
         return new Date(v.beginTime).getTime() > new Date().getTime();
       },
       isEnd(v){
+        if (!v.endTime) return false;
         return new Date(v.endTime).getTime() < new Date().getTime();
       },
       seckill(v){
@@ -217,32 +231,34 @@
         console.log("剩余时间 (毫秒):", endTime - now);
         console.log("剩余时间 (小时):", (endTime - now) / 1000 / 3600);
 
+        const token = sessionStorage.getItem('token');
         if(!token){
-          this.$message.error("请先登录")
           // 未登录，跳转
           setTimeout(() => {
             location.href = "/login.html"
           }, 200);
           return;
         }
-        if(this.isNotBegin(v)){
-          this.$message.error("优惠券抢购尚未开始！")
-          return;
-        }
-        if(this.isEnd(v)){
-          this.$message.error("优惠券抢购已经结束！")
-          return;
-        }
-        if(v.stock < 1){
-          this.$message.error("库存不足，请刷新再试试！")
-          return;
+        if(v.type){
+          if(this.isNotBegin(v)){
+            this.$message.error("优惠券抢购尚未开始！")
+            return;
+          }
+          if(this.isEnd(v)){
+            this.$message.error("优惠券抢购已经结束！")
+            return;
+          }
+          if(v.stock != null && v.stock < 1){
+            this.$message.error("库存不足，请刷新再试试！")
+            return;
+          }
         }
         let id = v.id;
         // 秒杀抢购
         axios.post("/voucher-order/seckill/" + id)
         .then(({data}) => {
           // 抢购成功，这里输出订单id，支付功能TODO
-          this.$message.success("抢购成功，订单id：" + data)
+          this.$message.success('抢购成功，订单id：' + data)
         })
         .catch(this.$message.error)
       }

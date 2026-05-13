@@ -45,6 +45,14 @@ public class CacheClient {
         String key = keyPrefix + id;
         String value = stringRedisTemplate.opsForValue().get(key);
         if (StrUtil.isNotBlank(value)) {
+            // 兼容逻辑过期格式：如果是 RedisData 包装，提取内部 data 字段
+            JSONObject jsonObject = JSONUtil.parseObj(value);
+            if (jsonObject.containsKey("expireTime") && jsonObject.containsKey("data")) {
+                Object inner = jsonObject.get("data");
+                if (inner != null) {
+                    return JSONUtil.toBean((JSONObject) inner, type);
+                }
+            }
             return JSONUtil.toBean(value, type);
         }
         if ("".equals(value)) {

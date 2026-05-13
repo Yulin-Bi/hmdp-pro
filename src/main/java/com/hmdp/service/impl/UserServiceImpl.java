@@ -3,25 +3,37 @@ package com.hmdp.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.RewardMessage;
+import com.hmdp.dto.SignResultDTO;
 import com.hmdp.dto.UserDTO;
+import com.hmdp.entity.RewardRecord;
+import com.hmdp.entity.RewardRule;
 import com.hmdp.entity.User;
+import com.hmdp.mapper.RewardRecordMapper;
+import com.hmdp.mapper.RewardRuleMapper;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RegexUtils;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +56,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // 所以选择将登录信息保存在redis中，性能更好。
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    @Resource
+    private RewardRuleMapper rewardRuleMapper;
+
+    @Resource
+    private RewardRecordMapper rewardRecordMapper;
 
     // MybatisPlus 可以实现单表增删改查 即ServiceImpl<UserMapper, User>
     // 验证码发送功能
@@ -119,43 +140,90 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     // 签到记录
     @Override
-    public Result signCount() {
-        // 1、获取用户
+    public Result signCount(String month) {
         Long userId = UserHolder.getUser().getId();
-        // 2、获取日期
         LocalDateTime now = LocalDateTime.now();
-        // 3、拼接key
-        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+
+        YearMonth yearMonth;
+        int daysInMonth;
+        if (month != null && !month.isEmpty()) {
+            yearMonth = YearMonth.parse(month, DateTimeFormatter.ofPattern("yyyyMM"));
+            daysInMonth = yearMonth.lengthOfMonth();
+        } else {
+            yearMonth = YearMonth.from(now);
+            daysInMonth = yearMonth.lengthOfMonth();
+        }
+        String keySuffix = yearMonth.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         String key = USER_SIGN_KEY + userId + keySuffix;
-        // 4、判断当前日期是本月第几天
-        int dayOfMonth = now.getDayOfMonth();
-        // 5、获取本月截至今天的所有签到记录 返回十进制数字
-        List<Long> result = stringRedisTemplate.opsForValue().bitField(
+
+        int maxDay = yearMonth.equals(YearMonth.from(now)) ? now.getDayOfMonth() : daysInMonth;
+
+        SignResultDTO dto = new SignResultDTO();
+
+        // 获取 BitMap 并解析每日签到状态
+        List<Long> bitField = stringRedisTemplate.opsForValue().bitField(
                 key,
                 BitFieldSubCommands.create()
-                        .get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
-        // 6、循环遍历
-        if (result == null || result.size() == 0) {
-            return Result.ok();
+                        .get(BitFieldSubCommands.BitFieldType.unsigned(maxDay)).valueAt(0));
+
+        List<Integer> dailyStatus = new ArrayList<>(daysInMonth);
+        Long num = (bitField != null && !bitField.isEmpty()) ? bitField.get(0) : 0L;
+        if (num == null) num = 0L;
+
+        int totalCount = 0;
+        // BITFIELD GET uN 0 返回的值中，offset 0 是最高位
+        // 所以 day i（对应 Redis offset i）在返回值中的 bit 位置是 (maxDay - 1 - i)
+        for (int i = 0; i < maxDay; i++) {
+            int signed = (int) ((num >>> (maxDay - 1 - i)) & 1);
+            dailyStatus.add(signed);
+            if (signed == 1) totalCount++;
         }
-        Long num = result.get(0);
-        if (num == null || num == 0L){
-            return Result.ok();
+        // 剩余未到日期的补 0
+        for (int i = maxDay; i < daysInMonth; i++) {
+            dailyStatus.add(0);
         }
-        int count = 0;
-        while (true){
-            // 61、让数字与1 得到数字的最后一个bit
-            // 62、判断这个bit是否为1
-            // 63、数字右移
-            if ((num & 1) == 0) {
-                // 未签到
+
+        // 连续签到天数（从今天往回数；历史月份从月末往回数）
+        int startIdx = yearMonth.equals(YearMonth.from(now)) ? maxDay - 1 : daysInMonth - 1;
+        int continuousCount = 0;
+        for (int i = startIdx; i >= 0; i--) {
+            if (dailyStatus.get(i) == 1) {
+                continuousCount++;
+            } else {
                 break;
-            }else{
-                count++;
             }
-            num = num >>> 1;
         }
-        return Result.ok(count);
+
+        dto.setTotalCount(totalCount);
+        dto.setContinuousCount(continuousCount);
+        dto.setDailyStatus(dailyStatus);
+
+        // 签到奖励进度
+        QueryWrapper<RewardRule> ruleWrapper = new QueryWrapper<>();
+        ruleWrapper.eq("reward_type", "sign").eq("status", 1);
+        RewardRule rule = rewardRuleMapper.selectOne(ruleWrapper);
+        if (rule != null) {
+            SignResultDTO.RewardProgress progress = new SignResultDTO.RewardProgress();
+            progress.setType("sign");
+            progress.setThreshold(rule.getThreshold());
+            progress.setCurrent(totalCount);
+
+            QueryWrapper<RewardRecord> recordWrapper = new QueryWrapper<>();
+            recordWrapper.eq("user_id", userId)
+                    .eq("reward_type", "sign")
+                    .eq("target_id", yearMonth.format(DateTimeFormatter.ofPattern("yyyyMM")));
+            Integer alreadyRewarded = rewardRecordMapper.selectCount(recordWrapper);
+            if (alreadyRewarded != null && alreadyRewarded > 0) {
+                progress.setDescription("本月已领取签到奖励");
+            } else if (totalCount >= rule.getThreshold()) {
+                progress.setDescription("已达成，优惠券已自动发放");
+            } else {
+                progress.setDescription("再签到" + (rule.getThreshold() - totalCount) + "天可得平台满减券");
+            }
+            dto.setReward(progress);
+        }
+
+        return Result.ok(dto);
     }
 
     // 签到功能
@@ -170,8 +238,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String key = USER_SIGN_KEY + userId + keySuffix;
         // 4、判断当前日期是本月第几天
         int dayOfMonth = now.getDayOfMonth();
-        // 5、写入redis
+        // 5、检查是否已签到
+        Boolean alreadySigned = stringRedisTemplate.opsForValue().getBit(key, dayOfMonth - 1);
+        if (Boolean.TRUE.equals(alreadySigned)) {
+            return Result.fail("今日已签到");
+        }
+        // 6、写入redis
         stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
+
+        // 6、统计当月累计签到天数，达标则发送奖励消息
+        try {
+            Long signCount = stringRedisTemplate.execute(
+                    (RedisCallback<Long>) connection ->
+                            connection.bitCount(key.getBytes()));
+            if (signCount != null && signCount >= 7) {
+                String month = now.format(DateTimeFormatter.ofPattern("yyyyMM"));
+                RewardMessage message = new RewardMessage(userId, "sign", month);
+                rocketMQTemplate.syncSend("reward-topic",
+                        MessageBuilder.withPayload(message).build());
+                log.debug("发送签到奖励消息成功，userId:{}, month:{}, signCount:{}", userId, month, signCount);
+            }
+        } catch (Exception e) {
+            log.error("发送签到奖励消息异常，userId:{}", userId, e);
+        }
+
         return Result.ok();
     }
 
